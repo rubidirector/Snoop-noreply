@@ -21,7 +21,7 @@
 #    https://securetoken.googleapis.com       Firebase 로그인 유지(토큰 갱신)
 #    https://www.googleapis.com               Firebase 로그인 보조 요청
 #    https://generativelanguage.googleapis.com   Gemini API(AI 생성·답장). 각자 자기 키로 직접 호출
-#  frame-src https://snoopnoreply-38223.firebaseapp.com   Google 로그인용 Firebase 숨은 창(iframe)
+#  frame-src 'self' https://snoopnoreply-38223.firebaseapp.com   Google 로그인용 숨은 창(iframe). 'self'는 /__/auth/ 중계 주소
 #  worker-src 'self'                          sw.js(알림을 눌렀을 때 앱으로 돌아오는 서비스 워커)
 #  manifest-src 'self'                        홈 화면에 추가할 때 쓰는 manifest.webmanifest
 #  object-src / base-uri / form-action 'none', frame-ancestors 'none'(다른 사이트가 이 사이트를 안에 넣지 못함)
@@ -31,7 +31,7 @@
 
 /*
   Strict-Transport-Security: max-age=63072000; includeSubDomains; preload
-  Content-Security-Policy: default-src 'none'; script-src 'self' https://www.gstatic.com/firebasejs/10.14.1/ https://apis.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob: https://lh3.googleusercontent.com; connect-src 'self' https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://www.googleapis.com https://generativelanguage.googleapis.com; frame-src https://snoopnoreply-38223.firebaseapp.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'; upgrade-insecure-requests
+  Content-Security-Policy: default-src 'none'; script-src 'self' https://www.gstatic.com/firebasejs/10.14.1/ https://apis.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob: https://lh3.googleusercontent.com; connect-src 'self' https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://www.googleapis.com https://generativelanguage.googleapis.com; frame-src 'self' https://snoopnoreply-38223.firebaseapp.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'; upgrade-insecure-requests
   X-Frame-Options: DENY
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
@@ -46,3 +46,8 @@
   Cache-Control: no-cache
 /sw.js
   Cache-Control: no-cache
+
+# Google 로그인 중계 주소(functions/_middleware.js)는 Firebase가 보낸 헤더를 그대로 써요. 우리 사이트가 이 창을 안에 넣어야 해서 아래 두 헤더를 빼요.
+/__/auth/*
+  ! X-Frame-Options
+  ! Content-Security-Policy

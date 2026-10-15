@@ -47,6 +47,7 @@ function normalize(s){
   s.calls=arr(s.calls).filter(Boolean).map(function(c){return {name:str(c.name),type:['missed','in','out'].indexOf(c.type)>=0?c.type:'in',time:str(c.time),count:Math.max(1,parseInt(c.count,10)||1)}}).filter(function(c){return c.name});
   s.events=arr(s.events).filter(Boolean).map(function(e){return {d:str(e.d),t:str(e.t)}}).filter(function(e){return /^\d{4}-\d{2}-\d{2}$/.test(e.d)});
   s.images=safeImages(s.images);
+  var vw=s.viewer&&typeof s.viewer==='object'?s.viewer:{};s.viewer={concept:vw.concept!==false,hint:vw.hint!==false};
   var y=s.system&&typeof s.system==='object'?s.system:{},pr=y.protagonist||{};
   s.system={protagonist:{personality:str(pr.personality),speech:str(pr.speech),secret:str(pr.secret),want:str(pr.want)},
     characters:arr(y.characters).filter(function(c){return c&&typeof c==='object'}).map(function(c){return {name:str(c.name),role:str(c.role),personality:str(c.personality),speech:str(c.speech),secret:str(c.secret),ping:Math.max(0,Math.min(100,parseInt(c.ping,10)||0))}}).filter(function(c){return c.name}),
@@ -433,7 +434,7 @@ var toastT;
 function toast(msg){var el=$('#ptoast');el.textContent=msg;el.classList.add('show');clearTimeout(toastT);toastT=setTimeout(function(){el.classList.remove('show')},1700)}
 
 var A={
-  island:function(){openInfo()},
+  island:function(){endHint();openInfo()},
   unlock:unlockFlow,
   notif:function(d){pendingOpen=d.id;unlockFlow()},
   key:function(d){var P=S.owner.pass;if(pin.length>=P.length)return;pin+=d.k;
@@ -533,7 +534,7 @@ function openThreadFresh(t){if(!unlocked){pendingOpen=t.id;unlockFlow();return}r
             So the moment the chat box gets focus (never earlier, or the tap would miss the box) we already make the phone as short as the keyboard will leave room for
             (remembered from the last time, or a good guess the first time). The box is then above the keyboard,
             Safari has no reason to slide the page, and we only fine-tune to the real size once the keyboard is up. */
-var APP_VER='nr-20261015s';
+var APP_VER='nr-20261015v';
 var vvPinned=false,prePin=false,prePinT=null;
 var IS_IOS=/iP(hone|ad|od)/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
 function layoutH(){return Math.max(innerHeight,document.documentElement.clientHeight)}
@@ -893,14 +894,15 @@ function playerRestart(){if(!pubStory)return;var d=JSON.parse(JSON.stringify(pub
   resetClock();relock();clearTimeout(playSaveT);Store.del('play:'+playKey);closeSheet();renderSide();toast('처음부터 다시 시작했어요')}
 function renderStatus(){
   var o=S.owner,low=o.battery<=20;
-  $('#sb').innerHTML='<span class="sb-time">'+esc(phoneTime())+'</span><span class="island" data-a="island" title="상황 설명"></span><span class="sb-ic"><svg width="18" height="12" viewBox="0 0 18 12"><rect x="0" y="8" width="3" height="4" rx="1" fill="currentColor"/><rect x="5" y="5.5" width="3" height="6.5" rx="1" fill="currentColor"/><rect x="10" y="3" width="3" height="9" rx="1" fill="currentColor"/><rect x="15" y="0" width="3" height="12" rx="1" fill="currentColor" opacity=".35"/></svg><svg width="16" height="12" viewBox="0 0 16 12"><path d="M8 11.5L5.6 9a3.4 3.4 0 014.8 0zM3.6 7a6.2 6.2 0 018.8 0l-1.4 1.4a4.2 4.2 0 00-6 0zM1.2 4.6a9.6 9.6 0 0113.6 0l-1.4 1.4a7.6 7.6 0 00-10.8 0z" fill="currentColor"/></svg><span class="bat'+(low?' low':'')+'"><i style="width:'+o.battery+'%"></i><b>'+o.battery+'</b></span></span>';
+  $('#sb').innerHTML='<span class="sb-time">'+esc(phoneTime())+'</span><span class="island'+(hintOn?' hint':'')+'" data-a="island" title="상황 설명"></span><span class="sb-ic"><svg width="18" height="12" viewBox="0 0 18 12"><rect x="0" y="8" width="3" height="4" rx="1" fill="currentColor"/><rect x="5" y="5.5" width="3" height="6.5" rx="1" fill="currentColor"/><rect x="10" y="3" width="3" height="9" rx="1" fill="currentColor"/><rect x="15" y="0" width="3" height="12" rx="1" fill="currentColor" opacity=".35"/></svg><svg width="16" height="12" viewBox="0 0 16 12"><path d="M8 11.5L5.6 9a3.4 3.4 0 014.8 0zM3.6 7a6.2 6.2 0 018.8 0l-1.4 1.4a4.2 4.2 0 00-6 0zM1.2 4.6a9.6 9.6 0 0113.6 0l-1.4 1.4a7.6 7.6 0 00-10.8 0z" fill="currentColor"/></svg><span class="bat'+(low?' low':'')+'"><i style="width:'+o.battery+'%"></i><b>'+o.battery+'</b></span></span>';
 }
 function sideHtml(){
   var o=S.owner,sc=S.scenario;
   var by=viewMode&&viewInfo&&viewInfo.ownerName?' · 만든 사람 '+esc(viewInfo.ownerName):'';
-  if(playerMode)return '<div class="eyebrow">Snoop</div><h1>'+esc(sc.title||(o.name+'의 폰'))+'</h1><p class="who">'+esc(o.name)+'의 휴대전화'+by+'</p>'+(sc.text?'<p class="story">'+esc(sc.text)+'</p>':'')+
-    (keyAskable()?'<div class="keynote"><p class="enote">'+(CFG.noReply?'폰 속 인물들이 먼저 연락해 오게 하려면':'폰 속 인물들과 대화하려면')+' 내 Gemini API 키가 필요해요.</p><button class="btn sm primary" data-s="keydlg">내 API 키 등록</button></div>':'')+
-    '<div class="btns two"><button class="btn primary" data-s="settings">설정</button><button class="btn" data-s="relock">처음부터 다시 보기</button></div>';
+  if(playerMode){var pv=S.viewer||{concept:true},ini=!!(S.system&&S.system.initiate&&S.system.initiate.on);
+    return '<div class="eyebrow">Snoop</div>'+(pv.concept?'<h1>'+esc(sc.title||(o.name+'의 폰'))+'</h1>':'')+'<p class="who">'+esc(o.name)+'의 휴대전화'+by+'</p>'+(pv.concept&&sc.text?'<p class="story">'+esc(sc.text)+'</p>':'')+
+    (ini&&keyAskable()?'<div class="keynote"><p class="enote">'+(CFG.noReply?'폰 속 인물들이 먼저 연락해 오게 하려면':'폰 속 인물들과 대화하려면')+' 내 Gemini API 키가 필요해요. 등록하지 않아도 폰은 그대로 볼 수 있어요.</p><button class="btn sm primary" data-s="keydlg">내 API 키 등록</button></div>':'')+
+    '<div class="btns two"><button class="btn primary" data-s="settings">설정</button><button class="btn" data-s="relock">처음부터 다시 보기</button></div>'}
   return '<div class="eyebrow">'+(viewMode?'공유받은 폰':'지금 보고 있는 폰')+'</div><h1>'+esc(sc.title||(o.name+'의 폰'))+'</h1><p class="who">'+esc(o.name)+'의 휴대전화 · 배터리 '+o.battery+'%'+by+'</p>'+
     (sc.text?'<p class="story">'+esc(sc.text)+'</p>':'')+
     '<div class="btns two">'+(viewMode?'<button class="btn primary" data-s="copy">이 폰 복사해서 꾸미기</button>':'<button class="btn primary" data-s="edit">폰 꾸미기</button>')+'<button class="btn" data-s="relock">처음부터 다시 시작</button></div>';
@@ -1281,6 +1283,10 @@ ED.sys=function(){
       '<label class="ck"><input type="checkbox" data-f="system.initiate.on"'+(y.initiate.on?' checked':'')+'> 먼저 연락하기 켜기</label>'+
       '<div class="row between"><span>빈도</span><span class="segm" role="group" aria-label="빈도">'+['low','mid','high'].map(function(k){return '<button class="'+(y.initiate.freq===k?'on':'')+'" data-e="pingFreq" data-v="'+k+'">'+FREQ[k].label+'</button>'}).join('')+'</span></div>'+
       '<div class="row"><button class="btn sm primary" data-e="pingTest">지금 한 번 보내 보기</button><span class="enote">확률과 상관없이 바로 한 명이 연락해요</span></div></div>'+
+    '<div class="sec" id="ed_viewer"><h3>사용자 화면 · 배포 링크</h3><p class="enote">배포 링크로 들어온 사용자에게 무엇을 보여 줄지 골라요. 바꾼 뒤 다시 배포해야 반영돼요.</p>'+
+      '<label class="ck"><input type="checkbox" data-f="viewer.concept"'+(S.viewer.concept?' checked':'')+'> 검은 섬을 누르면 상황 설명(제목·소개 글) 보여 주기</label>'+
+      '<label class="ck"><input type="checkbox" data-f="viewer.hint"'+(S.viewer.hint?' checked':'')+(y.initiate.on?'':' disabled')+'> 처음 열 때 "검은 섬을 눌러 보세요" 안내 띄우기</label>'+
+      '<p class="enote">'+(y.initiate.on?'API 키 등록 창은 저절로 뜨지 않아요. 사용자가 원할 때 검은 섬을 눌러 등록해요.':'먼저 연락하기가 꺼져 있어서 사용자에게 검은 섬 안내와 API 키 등록 화면이 뜨지 않아요.')+'</p></div>'+
     '<div class="sec"><h3>주인공 · '+esc(S.owner.name)+'</h3><div class="g2">'+F('성격',ta(p+'personality','예) 겉으론 무심, 속은 여림',2))+F('말투',ta(p+'speech','예) 짧은 반말, ㅋㅋ 자주',2))+'</div>'+
       '<div class="g2">'+F('숨기고 있는 것',ta(p+'secret','(선택)',2))+F('원하는 것',ta(p+'want','(선택)',2))+'</div></div>'+
     '<div class="sec"><div class="row between"><h3>등장인물 <small class="cnt">'+y.characters.length+'</small></h3>'+(missing.length?'<button class="btn sm" data-e="sysImport">대화·연락처에서 '+missing.length+'명 불러오기</button>':'')+'</div>'+
@@ -1568,6 +1574,7 @@ function renderSettings(){
     return '<div class="story-row'+(cur?' cur':'')+'"><span class="sw-mini" style="background:'+(WALLS[m.wall]||WALLS.dusk)+'"></span><div class="info"><b>'+esc(m.title||'제목 없음')+'</b><small>'+esc(m.name||'')+' · '+fmtTime(m.updatedAt||Date.now())+'</small>'+(m.concept?'<small>컨셉: '+esc(m.concept.slice(0,60))+'</small>':'')+'<div class="badges">'+badges+'</div></div><div class="acts">'+acts+'</div></div>'+share;
   }).join('')+'</div></div>';
   h+=aiSecHtml(false)+notifSecHtml()+themeSecHtml();
+  h+='<div class="sec" id="set_guide"><div class="row between"><h3>사용 방법</h3><button class="btn sm" data-t="guide">다시 보기</button></div><p class="enote">처음 열 때 나온 사용 방법 안내를 다시 볼 수 있어요.</p></div>';
   // danger
   h+='<div class="sec" id="set_danger"><h3>데이터 · 계정 삭제</h3><div class="danger-zone">'+
     '<div><b>이 기기의 데이터 지우기</b><p class="enote">이 브라우저에 저장된 폰 목록과 AI 키를 모두 지워요. 계정에 저장된 폰은 남아 있어요.</p></div><div class="row"><button class="btn sm danger" data-t="wipe">'+(armWipe?'한 번 더 누르면 지워져요':'이 기기 데이터 지우기')+'</button></div>'+
@@ -1578,6 +1585,7 @@ function renderSettings(){
 function setAction(d,el){
   switch(d.t){
     case 'close':closeSettings();break;
+    case 'guide':closeSettings();setTimeout(function(){startGuide(0)},260);break;
     case 'fs':fsToggle();break;
     case 'sysNotif':if(!('Notification' in window)){flashSet('이 브라우저는 시스템 알림을 지원하지 않아요.',true);break}Notification.requestPermission().then(function(r){renderSettings();flashSet(r==='granted'?'시스템 알림을 켰어요.':'알림이 허용되지 않았어요. 브라우저 설정에서 허용해 주세요.',r!=='granted')});break;
     case 'testNotif':playDing(true);var tt=S.threads[0];if(tt&&sysNotifyOk()&&document.hidden)systemNotify(tt,'알림 미리 듣기');else if(tt)showBanner(tt,'알림이 이렇게 보여요');break;
@@ -1670,9 +1678,59 @@ function build(){
   addEventListener('pagehide',touchSeen);
   try{if('serviceWorker' in navigator){navigator.serviceWorker.addEventListener('message',function(e){var d=e.data||{};var t=d.tid&&thr(d.tid);if(t)openThreadFresh(t)});
     navigator.serviceWorker.register('sw.js').then(function(r){swReg=r},function(){})}}catch(e){}
-  document.addEventListener('keydown',function(e){if(e.key!=='Escape')return;if($('#dlg')){closeDlg();return}if($('#sheet')){closeSheet();return}if(!$('#set').hidden){closeSettings();return}var tg=e.target;if(tg&&(tg.tagName==='INPUT'||tg.tagName==='TEXTAREA'||tg.tagName==='SELECT'))return;if(!$('#ed').hidden&&$('#ed').contains(tg))return;if(unlocked)A.back()});
+  document.addEventListener('keydown',function(e){if(e.key!=='Escape')return;if($('#guide')&&!$('#dlg')){endGuide();return}if($('#dlg')){closeDlg();return}if($('#sheet')){closeSheet();return}if(!$('#set').hidden){closeSettings();return}var tg=e.target;if(tg&&(tg.tagName==='INPUT'||tg.tagName==='TEXTAREA'||tg.tagName==='SELECT'))return;if(!$('#ed').hidden&&$('#ed').contains(tg))return;if(unlocked)A.back()});
 }
-function startPhone(){if(!playerMode||S.owner.name)maybeAskKey();loadBase();startPings();setTimeout(catchUp,1200);layout();renderStatus();reset('lock');renderSide();if(document.body.classList.contains('full'))setTimeout(function(){toast(playerMode?'위쪽 검은 섬을 누르면 설명과 설정이 나와요':'위쪽 검은 섬을 누르면 상황 설명이 나와요')},900)}
+function startPhone(){loadBase();startPings();setTimeout(catchUp,1200);layout();renderStatus();reset('lock');renderSide();
+  if(playerMode){if(S.owner.name)setTimeout(startHint,1400)}else adminIntro()}
+/* player: no key popup on arrival. If the admin turned on "먼저 연락하기" and the hint, the black island glows once
+   and a small caption says to tap it; the island sheet holds the story (if shown) and the optional key button. */
+var hintOn=false;
+function hintKey(){return 'nr-hint:'+(playKey||'')}
+function hintWanted(){if(!playerMode||!S.owner.name||!S.system.initiate.on||!S.viewer.hint)return false;var b=document.body.classList;if(!b.contains('full')&&!b.contains('narrow'))return false;
+  if(!keyAskable()&&!S.viewer.concept)return false;try{return localStorage.getItem(hintKey())!=='1'}catch(e){return true}}
+function startHint(){if(hintOn||!hintWanted())return;hintOn=true;renderStatus();var ph=$('#phone');if(ph&&!$('#ihint')){var t=document.createElement('div');t.id='ihint';t.className='ihint';t.setAttribute('aria-hidden','true');t.textContent='검은 섬을 눌러 보세요';ph.appendChild(t)}}
+function endHint(){if(!hintOn)return;hintOn=false;try{localStorage.setItem(hintKey(),'1')}catch(e){}var t=$('#ihint');if(t)t.remove();renderStatus()}
+/* admin: "Snoop" opening that fades into the how-to guide the first time; the guide can be replayed from Settings */
+var introDone=false;
+function guideSeen(){try{return localStorage.getItem('nr-guide-admin')==='1'}catch(e){return true}}
+function adminIntro(){if(introDone)return;introDone=true;
+  var sp=document.createElement('div');sp.id='splash';sp.className='splash';sp.setAttribute('aria-label','Snoop');
+  sp.innerHTML='<div class="sp-in"><div class="sp-logo">Snoop</div><span class="sp-line"></span><div class="sp-sub">누군가의 폰을 들여다보는 시간</div></div>';
+  document.body.appendChild(sp);
+  var gone=false;function out(){if(gone)return;gone=true;sp.classList.add('out');setTimeout(function(){sp.remove();if(!guideSeen())startGuide(0);else maybeAskKey()},700)}
+  requestAnimationFrame(function(){requestAnimationFrame(function(){sp.classList.add('in')})});
+  sp.addEventListener('click',out);setTimeout(out,2400)}
+var GUIDE=[
+  {t:'Snoop에 오신 걸 환영해요',d:'누군가의 폰을 만들어 링크로 배포하면, 링크를 연 사용자가 그 폰을 몰래 들여다봐요.\n총관리자는 모든 배포를 관리하고, 관리자는 폰을 만들어 배포하고, 사용자는 링크로 폰을 봐요.'},
+  {t:'검은 섬을 눌러 보세요',el:'island',d:'화면 위쪽 검은 섬을 누르면 상황 설명과 폰 꾸미기, 처음부터 다시 시작 버튼이 나와요.',dd:'넓은 화면에서는 오른쪽에 상황 설명과 버튼이 늘 보여요. 휴대폰에서는 화면 위쪽 검은 섬을 누르면 나와요.'},
+  {t:'폰 꾸미기',d:'주인공, 메시지·톡 대화, 사진, 메모, 통화 기록을 채워요.\n컨셉만 적으면 AI가 폰 전체를 한 번에 채워 줄 수도 있어요.'},
+  {t:'답장할 수 없는 폰',d:'이 버전에서는 사용자가 메시지와 톡에 답장할 수 없어요.\n대신 폰 속 인물들이 먼저 연락해 오면서 이야기가 흘러가요.'},
+  {t:'먼저 연락하기',d:'폰 꾸미기 › 🔒 탭에서 켜요. 인물마다 먼저 연락할 확률을 정하고 빈도를 골라요.\n"지금 한 번 보내 보기"로 바로 시험해 볼 수 있어요.'},
+  {t:'사용자 화면 고르기',d:'같은 🔒 탭의 "사용자 화면"에서 검은 섬으로 상황 설명을 보여 줄지, 처음 열 때 검은 섬 안내를 띄울지 골라요.\n먼저 연락하기가 꺼져 있으면 사용자에게 안내도, API 키 등록 화면도 뜨지 않아요.'},
+  {t:'배포하기',d:'설정 › 내가 만든 폰에서 배포를 누르면 링크가 바로 나와요. 배포하려면 Google로 로그인해야 해요.\n고친 뒤 다시 배포하면 같은 링크에 반영돼요.'},
+  {t:'AI와 API 키',act:'지금 키 등록하기',d:'AI로 폰 채우기와 먼저 연락하기에는 Gemini API 키가 필요해요. Google AI Studio에서 무료로 만들 수 있어요.\n사용자도 각자 자기 키를 등록해요. 내 키는 사용자에게 공유되지 않아요.'},
+  {t:'언제든 다시 보기',d:'이 안내는 설정 › 사용 방법 › 다시 보기에서 언제든 다시 볼 수 있어요.'}];
+var gIdx=0;
+function wideView(){var b=document.body.classList;return !b.contains('full')&&!b.contains('narrow')}
+function startGuide(i){closeSheet();gIdx=i||0;var g=$('#guide');
+  if(!g){g=document.createElement('div');g.id='guide';g.className='guide';g.setAttribute('role','dialog');g.setAttribute('aria-modal','true');g.setAttribute('aria-labelledby','gdT');document.body.appendChild(g);
+    g.addEventListener('click',function(e){var a=e.target.closest&&e.target.closest('[data-g]');if(!a)return;var k=a.dataset.g;
+      if(k==='next'){if(gIdx<GUIDE.length-1){gIdx++;drawGuide()}else endGuide()}
+      else if(k==='skip')endGuide();
+      else if(k==='act'){endGuide();openKeyDlg()}});
+    requestAnimationFrame(function(){requestAnimationFrame(function(){g.classList.add('on')})})}
+  drawGuide()}
+function guideTarget(st){if(st.el!=='island')return null;return wideView()?$('#side'):$('#sb .island')}
+function drawGuide(){var g=$('#guide');if(!g)return;var st=GUIDE[gIdx],n=GUIDE.length,last=gIdx===n-1,d=st.dd&&wideView()?st.dd:st.d;
+  g.innerHTML='<div class="gd-spot" id="gdSpot" hidden></div><div class="gd-card"><div class="gd-no"><span>'+(gIdx+1)+'</span><i>/</i><span>'+n+'</span></div><h3 id="gdT">'+esc(st.t)+'</h3><p>'+esc(d).replace(/\n/g,'<br>')+'</p>'+
+    (st.act&&keyAskable()?'<button class="gd-act" data-g="act">'+esc(st.act)+'</button>':'')+
+    '<div class="gd-dots" aria-hidden="true">'+GUIDE.map(function(_,k){return '<span'+(k===gIdx?' class="on"':'')+'></span>'}).join('')+'</div>'+
+    '<div class="gd-foot">'+(last?'<span></span>':'<button class="gd-skip" data-g="skip">건너뛰기</button>')+'<button class="gd-next" data-g="next">'+(last?'시작하기':'다음')+'</button></div></div>';
+  g.classList.toggle('wide',wideView());placeSpot()}
+function placeSpot(){var s=$('#gdSpot');if(!s)return;var t=guideTarget(GUIDE[gIdx]);if(!t||!t.getClientRects().length){s.hidden=true;return}
+  var r=t.getBoundingClientRect(),p=t.id==='side'?10:7;s.hidden=false;s.style.left=(r.left-p)+'px';s.style.top=(r.top-p)+'px';s.style.width=(r.width+2*p)+'px';s.style.height=(r.height+2*p)+'px';s.style.borderRadius=t.id==='side'?'22px':Math.round((r.height+2*p)/2)+'px'}
+addEventListener('resize',function(){setTimeout(placeSpot,60)});
+function endGuide(){try{localStorage.setItem('nr-guide-admin','1');localStorage.setItem(keyAskKey(),'1')}catch(e){}var g=$('#guide');if(!g)return;g.classList.remove('on');g.id='';setTimeout(function(){g.remove()},380)}
 function boot(){
   build();applyTheme();
   var q=new URLSearchParams(location.search),p=q.get('p'),s=q.get('s');

@@ -741,3 +741,40 @@ html{overscroll-behavior:none}
 .ch-foot.noreply .ch-in,.tc-foot.noreply .tc-in{opacity:.6}
 .ch-foot.noreply .round,.tc-foot.noreply .tc-plus,.tc-foot.noreply .tc-send,.ch-foot.noreply .mic{opacity:.35}
 .noreply input::placeholder{color:var(--psub)}
+
+/* admin opening: "Snoop" fades in, then fades into the how-to guide */
+.splash{position:fixed;inset:0;z-index:200;background:#faf7f6;display:grid;place-items:center;opacity:0;transition:opacity .9s ease;cursor:pointer}
+.splash.in{opacity:1}
+.splash.out{opacity:0;transition-duration:.7s}
+.sp-in{text-align:center;transform:translateY(8px);transition:transform 1.6s cubic-bezier(.2,.8,.2,1)}
+.splash.in .sp-in{transform:none}
+.sp-logo{font-family:var(--f-disp);font-size:clamp(46px,12vw,68px);font-weight:400;letter-spacing:.16em;padding-left:.16em;color:#3e3236;line-height:1}
+.sp-line{display:block;width:44px;height:1px;background:#d4c1c6;margin:22px auto 16px}
+.sp-sub{font-size:12px;letter-spacing:.32em;padding-left:.32em;color:#a8949a}
+
+/* how-to guide: outlined spotlight on the target + a card at the bottom (n / N, title, text, progress, skip / next) */
+.guide{position:fixed;inset:0;z-index:110;background:rgba(24,18,22,.26);opacity:0;transition:opacity .45s ease}
+.guide.on{opacity:1}
+.gd-spot{position:fixed;border:2px solid #a77f8a;box-shadow:0 0 0 7px rgba(236,221,225,.8);pointer-events:none;transition:left .35s,top .35s,width .35s,height .35s}
+.gd-card{position:fixed;left:50%;bottom:calc(16px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);width:min(440px,calc(100% - 32px));max-height:calc(100% - 120px);overflow:auto;background:#fffdfd;border:1px solid #e9dde0;padding:24px 24px 18px;text-align:center;color:#4a3c41;box-shadow:0 18px 50px rgba(60,40,48,.18);animation:gdUp .4s ease}
+@keyframes gdUp{from{opacity:0;transform:translate(-50%,10px)}to{opacity:1;transform:translate(-50%,0)}}
+.gd-no{font-family:var(--f-disp);color:#a8949a;font-size:15px;display:flex;justify-content:center;gap:12px;align-items:baseline}
+.gd-no i{font-style:italic;font-size:20px;color:#c9b6bb}
+.gd-card h3{font-family:var(--f-disp);font-size:22px;font-weight:700;margin:10px 0 12px;color:#3e3236}
+.gd-card p{margin:0;font-size:14.5px;line-height:1.8;color:#7e6b71;word-break:keep-all}
+.gd-act{margin-top:14px;background:none;border:1px solid #cdb5bc;color:#7a5a64;padding:9px 18px;font:inherit;font-size:13.5px;cursor:pointer}
+.gd-dots{display:flex;justify-content:center;gap:7px;margin:20px 0 16px}
+.gd-dots span{width:22px;height:3px;border-radius:2px;background:#ecdfe2}
+.gd-dots span.on{width:30px;background:#8e737b}
+.gd-foot{display:flex;justify-content:space-between;align-items:center}
+.gd-skip{background:none;border:0;color:#8f7c82;font:inherit;font-size:15px;padding:10px 4px;cursor:pointer}
+.gd-next{background:#8e737b;color:#fff;border:0;font:inherit;font-size:16px;padding:13px 34px;min-width:120px;cursor:pointer}
+.gd-next:focus-visible,.gd-skip:focus-visible,.gd-act:focus-visible{outline:2px solid #a77f8a;outline-offset:3px}
+.guide.wide .gd-card{left:24px;bottom:24px;transform:none;animation:none}
+
+/* player: one-time glow on the black island + a small caption that fades by itself */
+.island.hint{animation:islandPulse 2.2s ease-out infinite}
+@keyframes islandPulse{0%{box-shadow:0 0 0 0 rgba(150,150,160,.6)}70%{box-shadow:0 0 0 9px rgba(150,150,160,0)}100%{box-shadow:0 0 0 0 rgba(150,150,160,0)}}
+.ihint{position:absolute;left:50%;top:calc(var(--sb) - 3px);transform:translateX(-50%);z-index:46;font-size:12.5px;color:#fff;background:rgba(20,20,22,.72);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);padding:6px 13px;border-radius:14px;pointer-events:none;white-space:nowrap;animation:ihint 9s ease forwards}
+@keyframes ihint{0%{opacity:0;transform:translate(-50%,-4px)}8%{opacity:1;transform:translate(-50%,0)}85%{opacity:1}100%{opacity:0}}
+@media (prefers-reduced-motion:reduce){.splash,.sp-in,.guide,.gd-spot{transition:none}.gd-card{animation:none}.island.hint{animation:none;box-shadow:0 0 0 3px rgba(150,150,160,.6)}}

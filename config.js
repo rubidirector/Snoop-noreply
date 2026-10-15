@@ -25,7 +25,7 @@ window.PHONE_CONFIG = {
   // 이 값들은 공개돼도 괜찮아요. 데이터 보호는 firestore.rules가 맡아요.
   firebase: {
     apiKey: 'AIzaSyC37_0eeVA0PyiXE_mr37XI0dsvX-DAkfk',
-    authDomain: 'snoopnoreply-38223.firebaseapp.com',
+    authDomain: 'snoop-noreply.pages.dev',
     projectId: 'snoopnoreply-38223',
     storageBucket: 'snoopnoreply-38223.firebasestorage.app',
     messagingSenderId: '776823080552',

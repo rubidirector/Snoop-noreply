@@ -1,0 +1,124 @@
+rules_version = '2';
+// Firebase 콘솔 › Firestore Database › 규칙 탭에 이 내용을 그대로 붙여 넣고 [게시]를 누르세요.
+//
+// 원칙
+// - 기본은 전체 차단. 아래에 적힌 경우만 열어요.
+// - 로그인한 사람은 자기 문서만 쓰고 지울 수 있어요.
+// - 문서마다 저장할 수 있는 칸(필드)과 크기를 정해 두었어요. 목록에 없는 칸이나 너무 큰 값은 저장되지 않아요.
+//
+// 역할
+// - 총관리자: 아래 isSuper()에 적힌 이메일. 모든 배포를 보고, 목록에서 내리거나 배포를 중단할 수 있어요.
+//             config.js의 superAdmins와 같은 이메일로 맞춰 주세요.
+// - 관리자:   Google로 로그인한 누구나. 자기 폰을 만들고(stories) 배포해요(plays).
+// - 사용자:   플레이 링크(?play=)로 들어온 사람. 로그인 없이 배포된 폰(plays)을 읽기만 해요.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // 기본: 전부 차단 (아래 규칙이 허용한 경우만 통과)
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function signedIn() { return request.auth != null; }
+    function me() { return request.auth.uid; }
+    function isSuper() {
+      return signedIn()
+        && request.auth.token.email_verified == true
+        && request.auth.token.email in ['jyuel1411@gmail.com'];
+    }
+    function story(sid) { return get(/databases/$(database)/documents/stories/$(sid)).data; }
+    function play(pid) { return get(/databases/$(database)/documents/plays/$(pid)).data; }
+
+    // 짧은 글자 칸: 없거나, 정해진 길이 이하의 글자
+    function shortStr(d, k, n) { return !(k in d) || (d[k] is string && d[k].size() <= n); }
+    function isBool(d, k) { return !(k in d) || d[k] is bool; }
+    function idList(d, k) { return !(k in d) || (d[k] is list && d[k].size() <= 400); }
+    function stamp(d, k) { return !(k in d) || d[k] == request.time || d[k] is timestamp; }
+    // 바뀐 칸만 골라서 검사 (예전 문서에 남아 있는 칸 때문에 저장이 막히지 않도록)
+    function changed() { return request.resource.data.diff(resource.data).affectedKeys(); }
+
+    // ── 폰 데이터(작업용·배포용 공통) 칸 검사 ─────────────
+    function phoneFieldsOk(d) {
+      return d.owner is string
+        && shortStr(d, 'ownerName', 100)
+        && shortStr(d, 'title', 200)
+        && shortStr(d, 'name', 100)
+        && shortStr(d, 'summary', 300)
+        && shortStr(d, 'wall', 20)
+        && shortStr(d, 'concept', 400)
+        && (d.data is string && d.data.size() <= 900000)
+        && idList(d, 'imageIds')
+        && isBool(d, 'public') && isBool(d, 'listed')
+        && stamp(d, 'updatedAt') && stamp(d, 'createdAt');
+    }
+    // 사진 한 장: data:image/... 형태의 글자, 1MB 미만
+    function imageOk(d) {
+      return d.keys().hasOnly(['d'])
+        && d.d is string && d.d.size() < 1000000
+        && d.d.matches('data:image/(png|jpeg|jpg|webp|gif);base64,[A-Za-z0-9+/]+=*');
+    }
+
+    // ── 내 계정 정보(Gemini API 키) ──────────────────────
+    // 본인만 읽고 쓸 수 있어요. 총관리자도 볼 수 없어요.
+    match /users/{uid} {
+      allow read, delete: if signedIn() && me() == uid;
+      allow create, update: if signedIn() && me() == uid
+        && request.resource.data.keys().hasOnly(['geminiKey', 'keyAt'])
+        && shortStr(request.resource.data, 'geminiKey', 200)
+        && (!('keyAt' in request.resource.data) || request.resource.data.keyAt is int);
+    }
+
+    // ── 관리자가 만드는 작업용 폰 ────────────────────────
+    // 본인만 읽고 써요. (예전 공유 링크로 연 폰은 public일 때만 읽기 가능)
+    match /stories/{sid} {
+      allow read: if resource == null
+                  || resource.data.public == true
+                  || (signedIn() && resource.data.owner == me())
+                  || isSuper();
+      allow create: if signedIn()
+                    && request.resource.data.owner == me()
+                    && request.resource.data.keys().hasOnly(['owner','ownerName','title','name','summary','wall','concept','data','imageIds','public','listed','updatedAt','createdAt'])
+                    && phoneFieldsOk(request.resource.data);
+      allow update: if signedIn()
+                    && resource.data.owner == me()
+                    && request.resource.data.owner == me()
+                    && changed().hasOnly(['ownerName','title','name','summary','wall','concept','data','imageIds','public','listed','updatedAt'])
+                    && phoneFieldsOk(request.resource.data);
+      allow delete: if (signedIn() && resource.data.owner == me()) || isSuper();
+
+      match /images/{iid} {
+        allow read: if story(sid).public == true
+                    || (signedIn() && story(sid).owner == me())
+                    || isSuper();
+        allow create, update: if signedIn() && story(sid).owner == me() && iid.size() <= 80 && imageOk(request.resource.data);
+        allow delete: if (signedIn() && story(sid).owner == me()) || isSuper();
+      }
+    }
+
+    // ── 배포된 폰 ────────────────────────────────────────
+    // 누구나 읽을 수 있어요(플레이 링크). 만든 관리자만 바꾸고, 총관리자는 목록 노출만 바꾸거나 지울 수 있어요.
+    // ownerEmail은 예전 배포에 남은 것을 지우기만 할 수 있어요(공개 문서라 이메일을 남기지 않아요).
+    match /plays/{pid} {
+      allow read: if true;
+      allow create: if signedIn()
+                    && request.resource.data.owner == me()
+                    && request.resource.data.keys().hasOnly(['owner','ownerName','title','name','summary','wall','data','imageIds','version','listed','updatedAt','createdAt'])
+                    && phoneFieldsOk(request.resource.data)
+                    && request.resource.data.version is int;
+      allow update: if (signedIn()
+                        && resource.data.owner == me()
+                        && request.resource.data.owner == me()
+                        && changed().hasOnly(['ownerName','title','name','summary','wall','data','imageIds','version','listed','updatedAt','ownerEmail'])
+                        && !('ownerEmail' in request.resource.data)
+                        && phoneFieldsOk(request.resource.data))
+                    || (isSuper() && changed().hasOnly(['listed']) && request.resource.data.listed is bool);
+      allow delete: if (signedIn() && resource.data.owner == me()) || isSuper();
+
+      match /images/{iid} {
+        allow read: if true;
+        allow create, update: if signedIn() && play(pid).owner == me() && iid.size() <= 80 && imageOk(request.resource.data);
+        allow delete: if (signedIn() && play(pid).owner == me()) || isSuper();
+      }
+    }
+  }
+}

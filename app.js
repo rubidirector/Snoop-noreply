@@ -12,6 +12,10 @@ var S={},PUBLISHED_AT=0;
 function isHex(c){return typeof c==='string'&&/^#[0-9a-f]{3,8}$/i.test(c.trim())}
 var PALS=[['#8b9bb0','#d8d2c4','#5d6b7d'],['#c9a27e','#6e4f3c','#efe0cc'],['#6f8f8a','#cfd9d2','#3e5552'],['#b58ea0','#f0d9df','#5c4452'],['#2f3546','#e0b25a','#141820'],['#a9b7c6','#eef1f4','#64748b']];
 function hash(s){var h=0;s=str(s);for(var i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))|0;return Math.abs(h)}
+/* pictures are stored as data URLs and placed into style/src attributes, so only accept real base64 image data with simple ids */
+var IMG_RE=/^data:image\/(png|jpeg|jpg|webp|gif);base64,[A-Za-z0-9+\/]+=*$/;
+function safeImages(m){var out={};if(!m||typeof m!=='object'||Array.isArray(m))return out;
+  Object.keys(m).forEach(function(k){var v=m[k];if(/^[\w-]{1,80}$/.test(k)&&typeof v==='string'&&v.length<1200000&&IMG_RE.test(v))out[k]=v});return out}
 function normPh(ph){ph=ph||{};var c=arr(ph.c).filter(isHex).slice(0,3);return {c:c,l:str(ph.l)}}
 function normItem(it){
   if(!it||typeof it!=='object')return null;
@@ -42,7 +46,7 @@ function normalize(s){
   s.memos=arr(s.memos).filter(Boolean).map(function(m){return {title:str(m.title),body:str(m.body),date:str(m.date)}});
   s.calls=arr(s.calls).filter(Boolean).map(function(c){return {name:str(c.name),type:['missed','in','out'].indexOf(c.type)>=0?c.type:'in',time:str(c.time),count:Math.max(1,parseInt(c.count,10)||1)}}).filter(function(c){return c.name});
   s.events=arr(s.events).filter(Boolean).map(function(e){return {d:str(e.d),t:str(e.t)}}).filter(function(e){return /^\d{4}-\d{2}-\d{2}$/.test(e.d)});
-  s.images=(s.images&&typeof s.images==='object'&&!Array.isArray(s.images))?s.images:{};
+  s.images=safeImages(s.images);
   var y=s.system&&typeof s.system==='object'?s.system:{},pr=y.protagonist||{};
   s.system={protagonist:{personality:str(pr.personality),speech:str(pr.speech),secret:str(pr.secret),want:str(pr.want)},
     characters:arr(y.characters).filter(function(c){return c&&typeof c==='object'}).map(function(c){return {name:str(c.name),role:str(c.role),personality:str(c.personality),speech:str(c.speech),secret:str(c.secret),ping:Math.max(0,Math.min(100,parseInt(c.ping,10)||0))}}).filter(function(c){return c.name}),
@@ -529,7 +533,7 @@ function openThreadFresh(t){if(!unlocked){pendingOpen=t.id;unlockFlow();return}r
             So the moment the chat box gets focus (never earlier, or the tap would miss the box) we already make the phone as short as the keyboard will leave room for
             (remembered from the last time, or a good guess the first time). The box is then above the keyboard,
             Safari has no reason to slide the page, and we only fine-tune to the real size once the keyboard is up. */
-var APP_VER='nr-20261015a';
+var APP_VER='nr-20261015s';
 var vvPinned=false,prePin=false,prePinT=null;
 var IS_IOS=/iP(hone|ad|od)/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
 function layoutH(){return Math.max(innerHeight,document.documentElement.clientHeight)}
@@ -1040,7 +1044,7 @@ var Cloud={on:false,ready:false,user:null,err:'',
       if(snap.exists&&snap.data().owner!==u.uid)throw {code:'not_owner'};
       var prev=snap.exists?arr(snap.data().imageIds):[];
       var keep=prev.filter(function(id){return ids.indexOf(id)>=0});
-      var doc={owner:u.uid,ownerName:u.displayName||'',title:data.scenario.title||(data.owner.name+'의 폰'),name:data.owner.name,summary:str(data.scenario.text).slice(0,160),wall:data.owner.wall,concept:str(data.concept).slice(0,300),data:json,imageIds:keep,updatedAt:FV.serverTimestamp()};
+      var doc={owner:u.uid,ownerName:str(u.displayName).slice(0,100),title:str(data.scenario.title||(data.owner.name+'의 폰')).slice(0,200),name:str(data.owner.name).slice(0,100),summary:str(data.scenario.text).slice(0,160),wall:data.owner.wall,concept:str(data.concept).slice(0,300),data:json,imageIds:keep,updatedAt:FV.serverTimestamp()};
       if(!snap.exists){doc.public=false;doc.listed=false;doc.createdAt=FV.serverTimestamp()}
       return ref.set(doc,{merge:true}).then(function(){
         var add=ids.filter(function(id){return prev.indexOf(id)<0}),del=prev.filter(function(id){return ids.indexOf(id)<0});
@@ -1070,7 +1074,7 @@ var Cloud={on:false,ready:false,user:null,err:'',
       if(snap.exists&&snap.data().owner!==u.uid)throw {code:'not_owner'};
       var prev=snap.exists?arr(snap.data().imageIds):[];
       var keep=prev.filter(function(id){return ids.indexOf(id)>=0});
-      var doc={owner:u.uid,ownerName:u.displayName||'',ownerEmail:u.email||'',title:data.scenario.title||(data.owner.name+'의 폰'),name:data.owner.name,summary:str(data.scenario.text).slice(0,160),wall:data.owner.wall,data:json,imageIds:keep,version:ver,updatedAt:FV.serverTimestamp()};
+      var doc={owner:u.uid,ownerName:str(u.displayName).slice(0,100),ownerEmail:FV.delete(),title:str(data.scenario.title||(data.owner.name+'의 폰')).slice(0,200),name:str(data.owner.name).slice(0,100),summary:str(data.scenario.text).slice(0,160),wall:data.owner.wall,data:json,imageIds:keep,version:ver,updatedAt:FV.serverTimestamp()};
       if(!snap.exists){doc.listed=false;doc.createdAt=FV.serverTimestamp()}
       return ref.set(doc,{merge:true}).then(function(){
         var add=ids.filter(function(id){return prev.indexOf(id)<0}),del=prev.filter(function(id){return ids.indexOf(id)<0});

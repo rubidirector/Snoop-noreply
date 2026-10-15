@@ -1,0 +1,48 @@
+# Cloudflare Pages 보안 헤더. 이 파일을 사이트 맨 위 폴더에 두면 모든 페이지에 적용돼요.
+# 주소를 하나 추가하거나 뺄 때는 아래 설명을 같이 고쳐 주세요.
+#
+# Content-Security-Policy 허용 목록 (default-src 'none'에서 시작해 꼭 필요한 곳만 열었어요)
+#  script-src
+#    'self'                                   이 사이트의 app.js, config.js, example-data.js
+#    https://www.gstatic.com/firebasejs/10.14.1/   Firebase SDK(로그인·데이터). 버전 10.14.1 폴더만 허용
+#    https://apis.google.com                  Google 로그인 팝업을 띄울 때 Firebase가 불러오는 Google 스크립트
+#  style-src
+#    'self'                                   style.css
+#    'unsafe-inline'                          폰 화면의 배경색·사진을 style 속성으로 그려요(스크립트는 여전히 막혀 있어요)
+#    https://fonts.googleapis.com             글꼴(Noto Sans KR, Gowun Batang) 목록 CSS
+#  font-src  https://fonts.gstatic.com        글꼴 파일
+#  img-src
+#    'self' data: blob:                       아이콘, 사용자가 넣은 사진(사이트 안에서 data URL로 바꿔 저장)
+#    https://lh3.googleusercontent.com        설정 화면에 보이는 내 Google 프로필 사진
+#  connect-src
+#    'self'                                   예시 이야기 파일(stories/*.json)
+#    https://firestore.googleapis.com         Firestore(만든 폰·배포한 폰·내 API 키 저장)
+#    https://identitytoolkit.googleapis.com   Firebase 로그인
+#    https://securetoken.googleapis.com       Firebase 로그인 유지(토큰 갱신)
+#    https://www.googleapis.com               Firebase 로그인 보조 요청
+#    https://generativelanguage.googleapis.com   Gemini API(AI 생성·답장). 각자 자기 키로 직접 호출
+#  frame-src https://snoop-97d45.firebaseapp.com   Google 로그인용 Firebase 숨은 창(iframe)
+#  worker-src 'self'                          sw.js(알림을 눌렀을 때 앱으로 돌아오는 서비스 워커)
+#  manifest-src 'self'                        홈 화면에 추가할 때 쓰는 manifest.webmanifest
+#  object-src / base-uri / form-action 'none', frame-ancestors 'none'(다른 사이트가 이 사이트를 안에 넣지 못함)
+#
+# Permissions-Policy는 이 앱이 안 쓰는 기능(카메라·마이크·위치·센서·결제 등)을 모두 막아요. 전체 화면과 알림은 앱이 쓰니 막지 않아요.
+# Cross-Origin-Opener-Policy는 Google 로그인 팝업이 동작하도록 same-origin-allow-popups로 둬요.
+
+/*
+  Strict-Transport-Security: max-age=63072000; includeSubDomains; preload
+  Content-Security-Policy: default-src 'none'; script-src 'self' https://www.gstatic.com/firebasejs/10.14.1/ https://apis.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob: https://lh3.googleusercontent.com; connect-src 'self' https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://www.googleapis.com https://generativelanguage.googleapis.com; frame-src https://snoop-97d45.firebaseapp.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'; upgrade-insecure-requests
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: accelerometer=(), bluetooth=(), camera=(), display-capture=(), encrypted-media=(), geolocation=(), gyroscope=(), hid=(), idle-detection=(), magnetometer=(), microphone=(), midi=(), payment=(), picture-in-picture=(), publickey-credentials-get=(), screen-wake-lock=(), serial=(), usb=(), xr-spatial-tracking=()
+  Cross-Origin-Opener-Policy: same-origin-allow-popups
+  X-Permitted-Cross-Domain-Policies: none
+
+# index.html과 sw.js는 늘 새로 확인해서, 고친 버전이 바로 반영돼요.
+/index.html
+  Cache-Control: no-cache
+/
+  Cache-Control: no-cache
+/sw.js
+  Cache-Control: no-cache

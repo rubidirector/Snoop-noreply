@@ -5,9 +5,8 @@ window.PHONE_CONFIG = {
   noReply: true,
 
   // ── AI (Gemini) ─────────────────────────────────────────
-  // 서버를 거쳐 AI를 부를 때의 주소.
-  //  - 비워 두면('') 방문자가 설정 › AI · API 관리에서 각자 Gemini 키를 넣어서 써요.
-  //  - server.js 또는 Vercel(api/gemini.js)을 쓰면 '/api/gemini'로 바꾸세요.
+  // 이 사이트는 서버 코드가 없는 정적 사이트예요. 방문자가 설정에서 각자 Gemini 키를 넣어서 써요. 비워 두세요.
+  // (보안 헤더의 허용 목록에 없는 주소로는 연결되지 않아요.)
   aiProxy: '',
   allowUserKey: true,
 

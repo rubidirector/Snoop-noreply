@@ -534,7 +534,7 @@ function openThreadFresh(t){if(!unlocked){pendingOpen=t.id;unlockFlow();return}r
             So the moment the chat box gets focus (never earlier, or the tap would miss the box) we already make the phone as short as the keyboard will leave room for
             (remembered from the last time, or a good guess the first time). The box is then above the keyboard,
             Safari has no reason to slide the page, and we only fine-tune to the real size once the keyboard is up. */
-var APP_VER='nr-20261015w';
+var APP_VER='nr-20261015x';
 var vvPinned=false,prePin=false,prePinT=null;
 var IS_IOS=/iP(hone|ad|od)/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
 function layoutH(){return Math.max(innerHeight,document.documentElement.clientHeight)}
@@ -1283,10 +1283,6 @@ ED.sys=function(){
       '<label class="ck"><input type="checkbox" data-f="system.initiate.on"'+(y.initiate.on?' checked':'')+'> 먼저 연락하기 켜기</label>'+
       '<div class="row between"><span>빈도</span><span class="segm" role="group" aria-label="빈도">'+['low','mid','high'].map(function(k){return '<button class="'+(y.initiate.freq===k?'on':'')+'" data-e="pingFreq" data-v="'+k+'">'+FREQ[k].label+'</button>'}).join('')+'</span></div>'+
       '<div class="row"><button class="btn sm primary" data-e="pingTest">지금 한 번 보내 보기</button><span class="enote">확률과 상관없이 바로 한 명이 연락해요</span></div></div>'+
-    '<div class="sec" id="ed_viewer"><h3>사용자 화면 · 배포 링크</h3><p class="enote">배포 링크로 들어온 사용자에게 무엇을 보여 줄지 골라요. 바꾼 뒤 다시 배포해야 반영돼요.</p>'+
-      '<label class="ck"><input type="checkbox" data-f="viewer.concept"'+(S.viewer.concept?' checked':'')+'> 검은 섬을 누르면 상황 설명(제목·소개 글) 보여 주기</label>'+
-      '<label class="ck"><input type="checkbox" data-f="viewer.hint"'+(S.viewer.hint?' checked':'')+(y.initiate.on?'':' disabled')+'> 처음 열 때 "검은 섬을 눌러 보세요" 안내 띄우기</label>'+
-      '<p class="enote">'+(y.initiate.on?'API 키 등록 창은 저절로 뜨지 않아요. 사용자가 원할 때 검은 섬을 눌러 등록해요.':'먼저 연락하기가 꺼져 있어서 사용자에게 검은 섬 안내와 API 키 등록 화면이 뜨지 않아요.')+'</p></div>'+
     '<div class="sec"><h3>주인공 · '+esc(S.owner.name)+'</h3><div class="g2">'+F('성격',ta(p+'personality','예) 겉으론 무심, 속은 여림',2))+F('말투',ta(p+'speech','예) 짧은 반말, ㅋㅋ 자주',2))+'</div>'+
       '<div class="g2">'+F('숨기고 있는 것',ta(p+'secret','(선택)',2))+F('원하는 것',ta(p+'want','(선택)',2))+'</div></div>'+
     '<div class="sec"><div class="row between"><h3>등장인물 <small class="cnt">'+y.characters.length+'</small></h3>'+(missing.length?'<button class="btn sm" data-e="sysImport">대화·연락처에서 '+missing.length+'명 불러오기</button>':'')+'</div>'+
@@ -1573,6 +1569,11 @@ function renderSettings(){
     }
     return '<div class="story-row'+(cur?' cur':'')+'"><span class="sw-mini" style="background:'+(WALLS[m.wall]||WALLS.dusk)+'"></span><div class="info"><b>'+esc(m.title||'제목 없음')+'</b><small>'+esc(m.name||'')+' · '+fmtTime(m.updatedAt||Date.now())+'</small>'+(m.concept?'<small>컨셉: '+esc(m.concept.slice(0,60))+'</small>':'')+'<div class="badges">'+badges+'</div></div><div class="acts">'+acts+'</div></div>'+share;
   }).join('')+'</div></div>';
+  if(canEdit&&S&&S.viewer){var ini=!!(S.system&&S.system.initiate&&S.system.initiate.on);
+    h+='<div class="sec" id="set_viewer"><h3>사용자 화면 · 배포 링크</h3><p class="enote">지금 보고 있는 폰('+esc(S.scenario.title||(S.owner.name+'의 폰'))+')을 배포 링크로 연 사용자에게 무엇을 보여 줄지 골라요. 바꾼 뒤 다시 배포해야 반영돼요.</p>'+
+      '<label class="ck"><input type="checkbox" data-vw="concept"'+(S.viewer.concept?' checked':'')+'> 검은 섬을 누르면 상황 설명(제목·소개 글) 보여 주기</label>'+
+      '<label class="ck"><input type="checkbox" data-vw="hint"'+(S.viewer.hint?' checked':'')+(ini?'':' disabled')+'> 처음 열 때 "검은 섬을 눌러 보세요" 안내 띄우기</label>'+
+      '<p class="enote">'+(ini?'API 키 등록 창은 저절로 뜨지 않아요. 사용자가 원할 때 검은 섬을 눌러 등록해요.':'먼저 연락하기(폰 꾸미기 › 🔒 시스템)가 꺼져 있어서 사용자에게 검은 섬 안내와 API 키 등록 화면이 뜨지 않아요.')+'</p></div>'}
   h+=aiSecHtml(false)+notifSecHtml()+themeSecHtml();
   h+='<div class="sec" id="set_guide"><div class="row between"><h3>사용 방법</h3><button class="btn sm" data-t="guide">다시 보기</button></div><p class="enote">처음 열 때 나온 사용 방법 안내를 다시 볼 수 있어요.</p></div>';
   // danger
@@ -1622,6 +1623,7 @@ function runKeyTest(){if(!aiMode()){aiTestMsg='먼저 키를 넣어 주세요.';
   AI.text('연결 확인입니다. "확인"이라고만 답하세요.').then(function(){if(n===keyTestN)aiTestMsg='정상이에요'},function(e){if(n===keyTestN)aiTestMsg=aiErrMsg(e)}).then(function(){if(n===keyTestN){renderSettings();renderSide()}})}
 function flashSet(msg){var el=$('#setStatus');if(el){el.textContent=msg;clearTimeout(el._t);el._t=setTimeout(function(){el.textContent=''},8000)}}
 function onSetInput(e){var el=e.target;
+  if(el.dataset.vw){if(e.type!=='change'||!S||!S.viewer)return;S.viewer[el.dataset.vw]=el.checked;markChanged(true);renderSettings();return}
   if(el.id==='aiKey'){var nk=el.value.trim();if(nk===AIS.key)return;AIS.key=nk;saveAIS();aiTestMsg='';renderSide();
     clearTimeout(keyTestT);if(nk.length>=30)keyTestT=setTimeout(function(){if(AIS.key===nk)runKeyTest()},700);return}
   if(el.id==='optSound'){soundOn=el.checked;try{localStorage.setItem('phone-sound',soundOn?'1':'0')}catch(x){}if(soundOn)playDing(true);return}
@@ -1707,7 +1709,7 @@ var GUIDE=[
   {t:'AI로 폰 만들기',at:{ed:'ai'},el:function(){return $('#aiConcept')},d:'폰 꾸미기의 ✦ AI 탭이에요. 컨셉만 적으면 AI가 대화, 사진, 메모까지 폰 전체를 채워 줘요.'},
   {t:'대화 만들기',at:{ed:'chats'},el:function(){return $('#edTabs [data-tab="chats"]')},d:'메시지와 톡 대화는 대화·연락처 탭에서 만들어요.\n이 버전에서 사용자는 답장할 수 없고, 폰 속 인물들이 먼저 연락해 와요.'},
   {t:'먼저 연락하기',at:{ed:'sys'},el:function(){return $('#ed_initiate')},d:'🔒 시스템 탭에서 켜요. 빈도를 고르고, 인물마다 먼저 연락할 확률은 아래 등장인물 카드에서 정해요.'},
-  {t:'사용자 화면 고르기',at:{ed:'sys'},el:function(){return $('#ed_viewer')},d:'배포 링크로 들어온 사용자에게 상황 설명을 보여 줄지, 처음 열 때 검은 섬 안내를 띄울지 골라요.\n먼저 연락하기가 꺼져 있으면 안내도, 키 등록 화면도 뜨지 않아요.'},
+  {t:'사용자 화면 고르기',at:{set:1},el:function(){return $('#set_viewer')},d:'설정의 이 칸에서 배포 링크로 들어온 사용자에게 상황 설명을 보여 줄지, 처음 열 때 검은 섬 안내를 띄울지 골라요.\n먼저 연락하기가 꺼져 있으면 안내도, 키 등록 화면도 뜨지 않아요.'},
   {t:'배포하기',at:{set:1},el:function(){return $('#set_mine .story-row.cur [data-t="share"]')||$('#set_mine')},d:'설정 › 내가 만든 폰에서 배포를 누르면 링크가 바로 나와요. Google로 로그인해야 해요.\n고친 뒤 다시 배포하면 같은 링크에 반영돼요.'},
   {t:'AI와 API 키',at:{set:1},act:'지금 키 등록하기',el:function(){var k=$('#aiKey');return k?k.closest('.copyrow'):$('#set_ai')},d:'AI로 폰 채우기와 먼저 연락하기에는 Gemini API 키가 필요해요. Google AI Studio에서 무료로 만들어 여기에 붙여 넣어요.\n내 키는 사용자에게 공유되지 않아요.'},
   {t:'언제든 다시 보기',at:{set:1},el:function(){return $('#set_guide')},d:'이 안내는 설정 › 사용 방법 › 다시 보기에서 언제든 다시 볼 수 있어요.'}];

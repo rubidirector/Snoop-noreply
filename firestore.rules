@@ -1,0 +1,61 @@
+rules_version = '2';
+// Firebase 콘솔 › Firestore Database › 규칙 탭에 이 내용을 그대로 붙여 넣고 [게시]를 누르세요.
+//
+// 역할
+// - 총관리자: 아래 isSuper()에 적힌 이메일. 모든 배포를 보고, 둘러보기에서 내리거나 배포를 중단할 수 있어요.
+//             config.js의 superAdmins와 같은 이메일로 맞춰 주세요.
+// - 관리자:   Google로 로그인한 누구나. 자기 폰을 만들고(stories) 배포해요(plays).
+// - 사용자:   플레이 링크(?play=)로 들어온 사람. 로그인 없이 배포된 폰(plays)을 읽기만 해요.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function isSuper() {
+      return signedIn()
+        && request.auth.token.email_verified == true
+        && request.auth.token.email in ['jyuel1411@gmail.com'];
+    }
+    function story(sid) { return get(/databases/$(database)/documents/stories/$(sid)).data; }
+    function play(pid) { return get(/databases/$(database)/documents/plays/$(pid)).data; }
+
+    // 각자 자기 계정 정보(Gemini API 키). 본인만 읽고 쓸 수 있어요. 총관리자도 볼 수 없어요.
+    match /users/{uid} {
+      allow read, write: if signedIn() && request.auth.uid == uid;
+    }
+
+    // 관리자가 만드는 작업용 폰. 본인만 읽고 써요. (예전 공유 링크는 public일 때만 읽기 가능)
+    match /stories/{sid} {
+      allow read: if resource == null
+                  || resource.data.public == true
+                  || (signedIn() && resource.data.owner == request.auth.uid)
+                  || isSuper();
+      allow create: if signedIn() && request.resource.data.owner == request.auth.uid;
+      allow update: if signedIn()
+                    && resource.data.owner == request.auth.uid
+                    && request.resource.data.owner == request.auth.uid;
+      allow delete: if (signedIn() && resource.data.owner == request.auth.uid) || isSuper();
+
+      match /images/{iid} {
+        allow read: if story(sid).public == true
+                    || (signedIn() && story(sid).owner == request.auth.uid)
+                    || isSuper();
+        allow write: if (signedIn() && story(sid).owner == request.auth.uid) || isSuper();
+      }
+    }
+
+    // 배포된 폰. 누구나 읽을 수 있고, 만든 관리자와 총관리자만 바꾸거나 지울 수 있어요.
+    match /plays/{pid} {
+      allow read: if true;
+      allow create: if signedIn() && request.resource.data.owner == request.auth.uid;
+      allow update: if (signedIn()
+                        && resource.data.owner == request.auth.uid
+                        && request.resource.data.owner == request.auth.uid)
+                    || (isSuper() && request.resource.data.owner == resource.data.owner);
+      allow delete: if (signedIn() && resource.data.owner == request.auth.uid) || isSuper();
+
+      match /images/{iid} {
+        allow read: if true;
+        allow write: if (signedIn() && play(pid).owner == request.auth.uid) || isSuper();
+      }
+    }
+  }
+}

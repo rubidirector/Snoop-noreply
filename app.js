@@ -534,7 +534,7 @@ function openThreadFresh(t){if(!unlocked){pendingOpen=t.id;unlockFlow();return}r
             So the moment the chat box gets focus (never earlier, or the tap would miss the box) we already make the phone as short as the keyboard will leave room for
             (remembered from the last time, or a good guess the first time). The box is then above the keyboard,
             Safari has no reason to slide the page, and we only fine-tune to the real size once the keyboard is up. */
-var APP_VER='nr-20261015v';
+var APP_VER='nr-20261015w';
 var vvPinned=false,prePin=false,prePinT=null;
 var IS_IOS=/iP(hone|ad|od)/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
 function layoutH(){return Math.max(innerHeight,document.documentElement.clientHeight)}
@@ -1279,7 +1279,7 @@ ED.sys=function(){
   var rels=y.relations.map(function(r,i){return '<div class="lrow"><div class="main"><span class="tag">'+esc(r.a)+' ↔ '+esc(r.b)+'</span><input data-f="system.relations.'+i+'.desc" value="'+esc(r.desc)+'" placeholder="두 사람의 관계" style="flex:1 1 160px" aria-label="관계 설명"></div><button class="x" data-e="relDel" data-i="'+i+'" aria-label="삭제">✕</button></div>'}).join('');
   var opt=function(id){return '<select id="'+id+'" aria-label="인물">'+names.map(function(n){return '<option>'+esc(n)+'</option>'}).join('')+'</select>'};
   return '<div class="banner">'+LOCK+'<b>이 폰을 만든 사람에게만 보이는 설정이에요.</b><span style="color:var(--muted)">폰을 보는 사람의 화면에는 나오지 않고, AI가 답장하거나 내용을 만들 때만 참고해요. 다른 사람이 복사해 갈 때는 빠져요.</span></div>'+
-    '<div class="sec"><h3>먼저 연락하기</h3><p class="enote">켜 두면 폰을 보는 동안 등장인물이 각자의 확률에 따라 무작위로 먼저 메시지를 보내요. 확률은 아래 등장인물 카드에서 정해요.</p>'+
+    '<div class="sec" id="ed_initiate"><h3>먼저 연락하기</h3><p class="enote">켜 두면 폰을 보는 동안 등장인물이 각자의 확률에 따라 무작위로 먼저 메시지를 보내요. 확률은 아래 등장인물 카드에서 정해요.</p>'+
       '<label class="ck"><input type="checkbox" data-f="system.initiate.on"'+(y.initiate.on?' checked':'')+'> 먼저 연락하기 켜기</label>'+
       '<div class="row between"><span>빈도</span><span class="segm" role="group" aria-label="빈도">'+['low','mid','high'].map(function(k){return '<button class="'+(y.initiate.freq===k?'on':'')+'" data-e="pingFreq" data-v="'+k+'">'+FREQ[k].label+'</button>'}).join('')+'</span></div>'+
       '<div class="row"><button class="btn sm primary" data-e="pingTest">지금 한 번 보내 보기</button><span class="enote">확률과 상관없이 바로 한 명이 연락해요</span></div></div>'+
@@ -1695,42 +1695,62 @@ var introDone=false;
 function guideSeen(){try{return localStorage.getItem('nr-guide-admin')==='1'}catch(e){return true}}
 function adminIntro(){if(introDone)return;introDone=true;
   var sp=document.createElement('div');sp.id='splash';sp.className='splash';sp.setAttribute('aria-label','Snoop');
-  sp.innerHTML='<div class="sp-in"><div class="sp-logo">Snoop</div><span class="sp-line"></span><div class="sp-sub">누군가의 폰을 들여다보는 시간</div></div>';
+  sp.innerHTML='<div class="sp-in"><div class="sp-logo">Snoop</div><span class="sp-line"></span></div>';
   document.body.appendChild(sp);
   var gone=false;function out(){if(gone)return;gone=true;sp.classList.add('out');setTimeout(function(){sp.remove();if(!guideSeen())startGuide(0);else maybeAskKey()},700)}
   requestAnimationFrame(function(){requestAnimationFrame(function(){sp.classList.add('in')})});
   sp.addEventListener('click',out);setTimeout(out,2400)}
+/* each step moves the app to the screen it talks about (phone, island sheet, editor tab, settings) and outlines the spot */
 var GUIDE=[
-  {t:'Snoop에 오신 걸 환영해요',d:'누군가의 폰을 만들어 링크로 배포하면, 링크를 연 사용자가 그 폰을 몰래 들여다봐요.\n총관리자는 모든 배포를 관리하고, 관리자는 폰을 만들어 배포하고, 사용자는 링크로 폰을 봐요.'},
-  {t:'검은 섬을 눌러 보세요',el:'island',d:'화면 위쪽 검은 섬을 누르면 상황 설명과 폰 꾸미기, 처음부터 다시 시작 버튼이 나와요.',dd:'넓은 화면에서는 오른쪽에 상황 설명과 버튼이 늘 보여요. 휴대폰에서는 화면 위쪽 검은 섬을 누르면 나와요.'},
-  {t:'폰 꾸미기',d:'주인공, 메시지·톡 대화, 사진, 메모, 통화 기록을 채워요.\n컨셉만 적으면 AI가 폰 전체를 한 번에 채워 줄 수도 있어요.'},
-  {t:'답장할 수 없는 폰',d:'이 버전에서는 사용자가 메시지와 톡에 답장할 수 없어요.\n대신 폰 속 인물들이 먼저 연락해 오면서 이야기가 흘러가요.'},
-  {t:'먼저 연락하기',d:'폰 꾸미기 › 🔒 탭에서 켜요. 인물마다 먼저 연락할 확률을 정하고 빈도를 골라요.\n"지금 한 번 보내 보기"로 바로 시험해 볼 수 있어요.'},
-  {t:'사용자 화면 고르기',d:'같은 🔒 탭의 "사용자 화면"에서 검은 섬으로 상황 설명을 보여 줄지, 처음 열 때 검은 섬 안내를 띄울지 골라요.\n먼저 연락하기가 꺼져 있으면 사용자에게 안내도, API 키 등록 화면도 뜨지 않아요.'},
-  {t:'배포하기',d:'설정 › 내가 만든 폰에서 배포를 누르면 링크가 바로 나와요. 배포하려면 Google로 로그인해야 해요.\n고친 뒤 다시 배포하면 같은 링크에 반영돼요.'},
-  {t:'AI와 API 키',act:'지금 키 등록하기',d:'AI로 폰 채우기와 먼저 연락하기에는 Gemini API 키가 필요해요. Google AI Studio에서 무료로 만들 수 있어요.\n사용자도 각자 자기 키를 등록해요. 내 키는 사용자에게 공유되지 않아요.'},
-  {t:'언제든 다시 보기',d:'이 안내는 설정 › 사용 방법 › 다시 보기에서 언제든 다시 볼 수 있어요.'}];
-var gIdx=0;
+  {t:'검은 섬',at:{},el:function(){return $('#sb .island')},d:'화면 위쪽 검은 섬을 누르면 이 폰의 상황 설명과 버튼이 나와요.'},
+  {t:'상황 설명',at:{sheet:1},el:function(){return wideView()?$('#side'):$('#sheetIn .btns')},d:'검은 섬을 누르면 이렇게 상황 설명이 나와요. 아래 버튼으로 폰 꾸미기를 열거나 처음부터 다시 시작해요.',dd:'넓은 화면에서는 상황 설명과 버튼이 오른쪽에 늘 보여요. 휴대폰에서는 검은 섬을 누르면 나와요.'},
+  {t:'AI로 폰 만들기',at:{ed:'ai'},el:function(){return $('#aiConcept')},d:'폰 꾸미기의 ✦ AI 탭이에요. 컨셉만 적으면 AI가 대화, 사진, 메모까지 폰 전체를 채워 줘요.'},
+  {t:'대화 만들기',at:{ed:'chats'},el:function(){return $('#edTabs [data-tab="chats"]')},d:'메시지와 톡 대화는 대화·연락처 탭에서 만들어요.\n이 버전에서 사용자는 답장할 수 없고, 폰 속 인물들이 먼저 연락해 와요.'},
+  {t:'먼저 연락하기',at:{ed:'sys'},el:function(){return $('#ed_initiate')},d:'🔒 시스템 탭에서 켜요. 빈도를 고르고, 인물마다 먼저 연락할 확률은 아래 등장인물 카드에서 정해요.'},
+  {t:'사용자 화면 고르기',at:{ed:'sys'},el:function(){return $('#ed_viewer')},d:'배포 링크로 들어온 사용자에게 상황 설명을 보여 줄지, 처음 열 때 검은 섬 안내를 띄울지 골라요.\n먼저 연락하기가 꺼져 있으면 안내도, 키 등록 화면도 뜨지 않아요.'},
+  {t:'배포하기',at:{set:1},el:function(){return $('#set_mine .story-row.cur [data-t="share"]')||$('#set_mine')},d:'설정 › 내가 만든 폰에서 배포를 누르면 링크가 바로 나와요. Google로 로그인해야 해요.\n고친 뒤 다시 배포하면 같은 링크에 반영돼요.'},
+  {t:'AI와 API 키',at:{set:1},act:'지금 키 등록하기',el:function(){var k=$('#aiKey');return k?k.closest('.copyrow'):$('#set_ai')},d:'AI로 폰 채우기와 먼저 연락하기에는 Gemini API 키가 필요해요. Google AI Studio에서 무료로 만들어 여기에 붙여 넣어요.\n내 키는 사용자에게 공유되지 않아요.'},
+  {t:'언제든 다시 보기',at:{set:1},el:function(){return $('#set_guide')},d:'이 안내는 설정 › 사용 방법 › 다시 보기에서 언제든 다시 볼 수 있어요.'}];
+var gIdx=0,gSeq=0;
 function wideView(){var b=document.body.classList;return !b.contains('full')&&!b.contains('narrow')}
-function startGuide(i){closeSheet();gIdx=i||0;var g=$('#guide');
+/* put the app in the state a step needs: which of island sheet / editor tab / settings is open */
+function guideGo(at,cb){var moved=false;
+  if(!at.sheet&&$('#sheet')){closeSheet();moved=true}
+  if(!at.set&&!$('#set').hidden){closeSettings();moved=true}
+  if(!at.ed&&!$('#ed').hidden){forceClose=true;closeEditor();forceClose=false;moved=true}
+  if(at.sheet&&!$('#sheet')&&!wideView()){openInfo();moved=true}
+  if(at.ed){if($('#ed').hidden){openEditor(at.ed);moved=true}else if(edTab!==at.ed){edTab=at.ed;edThread=null;renderEditor();moved=true}}
+  if(at.set&&$('#set').hidden){openSettings();moved=true}
+  setTimeout(cb,moved?320:0)}
+function startGuide(i){gIdx=i||0;var g=$('#guide');
   if(!g){g=document.createElement('div');g.id='guide';g.className='guide';g.setAttribute('role','dialog');g.setAttribute('aria-modal','true');g.setAttribute('aria-labelledby','gdT');document.body.appendChild(g);
     g.addEventListener('click',function(e){var a=e.target.closest&&e.target.closest('[data-g]');if(!a)return;var k=a.dataset.g;
       if(k==='next'){if(gIdx<GUIDE.length-1){gIdx++;drawGuide()}else endGuide()}
       else if(k==='skip')endGuide();
-      else if(k==='act'){endGuide();openKeyDlg()}});
+      else if(k==='act'){endGuide(function(){openKeyDlg()})}});
     requestAnimationFrame(function(){requestAnimationFrame(function(){g.classList.add('on')})})}
   drawGuide()}
-function guideTarget(st){if(st.el!=='island')return null;return wideView()?$('#side'):$('#sb .island')}
-function drawGuide(){var g=$('#guide');if(!g)return;var st=GUIDE[gIdx],n=GUIDE.length,last=gIdx===n-1,d=st.dd&&wideView()?st.dd:st.d;
-  g.innerHTML='<div class="gd-spot" id="gdSpot" hidden></div><div class="gd-card"><div class="gd-no"><span>'+(gIdx+1)+'</span><i>/</i><span>'+n+'</span></div><h3 id="gdT">'+esc(st.t)+'</h3><p>'+esc(d).replace(/\n/g,'<br>')+'</p>'+
-    (st.act&&keyAskable()?'<button class="gd-act" data-g="act">'+esc(st.act)+'</button>':'')+
-    '<div class="gd-dots" aria-hidden="true">'+GUIDE.map(function(_,k){return '<span'+(k===gIdx?' class="on"':'')+'></span>'}).join('')+'</div>'+
-    '<div class="gd-foot">'+(last?'<span></span>':'<button class="gd-skip" data-g="skip">건너뛰기</button>')+'<button class="gd-next" data-g="next">'+(last?'시작하기':'다음')+'</button></div></div>';
-  g.classList.toggle('wide',wideView());placeSpot()}
-function placeSpot(){var s=$('#gdSpot');if(!s)return;var t=guideTarget(GUIDE[gIdx]);if(!t||!t.getClientRects().length){s.hidden=true;return}
-  var r=t.getBoundingClientRect(),p=t.id==='side'?10:7;s.hidden=false;s.style.left=(r.left-p)+'px';s.style.top=(r.top-p)+'px';s.style.width=(r.width+2*p)+'px';s.style.height=(r.height+2*p)+'px';s.style.borderRadius=t.id==='side'?'22px':Math.round((r.height+2*p)/2)+'px'}
+function drawGuide(){var g=$('#guide');if(!g)return;var st=GUIDE[gIdx],n=GUIDE.length,last=gIdx===n-1,d=st.dd&&wideView()?st.dd:st.d,seq=++gSeq;
+  g.classList.add('moving');
+  guideGo(st.at,function(){if(seq!==gSeq||!$('#guide'))return;
+    var t=st.el(),sc=t&&t.closest&&t.closest('#edBody,#setBody');if(sc){var tr=t.getBoundingClientRect(),br=sc.getBoundingClientRect();sc.scrollTop+=tr.height<220?(tr.top-br.top)-Math.max(16,(br.height*0.42-tr.height)/2):(tr.top-br.top)-14}
+    g.innerHTML='<div class="gd-spot" id="gdSpot" hidden></div><div class="gd-card" id="gdCard"><div class="gd-no"><span>'+(gIdx+1)+'</span><i>/</i><span>'+n+'</span></div><h3 id="gdT">'+esc(st.t)+'</h3><p>'+esc(d).replace(/\n/g,'<br>')+'</p>'+
+      (st.act&&keyAskable()?'<button class="gd-act" data-g="act">'+esc(st.act)+'</button>':'')+
+      '<div class="gd-dots" aria-hidden="true">'+GUIDE.map(function(_,k){return '<span'+(k===gIdx?' class="on"':'')+'></span>'}).join('')+'</div>'+
+      '<div class="gd-foot">'+(last?'<span></span>':'<button class="gd-skip" data-g="skip">건너뛰기</button>')+'<button class="gd-next" data-g="next">'+(last?'시작하기':'다음')+'</button></div></div>';
+    g.classList.toggle('wide',wideView());placeSpot();g.classList.remove('moving')})}
+function placeSpot(){var g=$('#guide'),s=$('#gdSpot'),c=$('#gdCard');if(!g||!s||!c)return;var t=GUIDE[gIdx].el();
+  c.classList.remove('top');
+  if(!t||!t.getClientRects().length){s.hidden=true;g.classList.add('nospot');return}
+  g.classList.remove('nospot');
+  var r=t.getBoundingClientRect(),p=t.matches('.island')?7:6,H=innerHeight;
+  var top=Math.max(4,r.top-p),bot=Math.min(H-4,r.bottom+p);
+  s.hidden=false;s.style.left=Math.max(4,r.left-p)+'px';s.style.top=top+'px';s.style.width=(Math.min(innerWidth-4,r.right+p)-Math.max(4,r.left-p))+'px';s.style.height=Math.max(0,bot-top)+'px';
+  s.style.borderRadius=t.matches('.island,.ed-tab,.btn')?Math.round(Math.min(40,(r.height+2*p)/2))+'px':'16px';
+  var cr=c.getBoundingClientRect();if(!g.classList.contains('wide')&&cr.top<bot&&cr.bottom>top){var room=top-16;if(room>=cr.height||top>H-bot)c.classList.add('top')}}
 addEventListener('resize',function(){setTimeout(placeSpot,60)});
-function endGuide(){try{localStorage.setItem('nr-guide-admin','1');localStorage.setItem(keyAskKey(),'1')}catch(e){}var g=$('#guide');if(!g)return;g.classList.remove('on');g.id='';setTimeout(function(){g.remove()},380)}
+function endGuide(after){try{localStorage.setItem('nr-guide-admin','1');localStorage.setItem(keyAskKey(),'1')}catch(e){}var g=$('#guide');gSeq++;
+  guideGo({},function(){if(typeof after==='function')after()});if(!g)return;g.classList.remove('on');g.id='';setTimeout(function(){g.remove()},380)}
 function boot(){
   build();applyTheme();
   var q=new URLSearchParams(location.search),p=q.get('p'),s=q.get('s');

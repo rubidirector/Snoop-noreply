@@ -24,12 +24,12 @@ window.PHONE_CONFIG = {
   // Firebase 콘솔 › 프로젝트 설정 › 내 앱(웹)에 보이는 firebaseConfig 값을 그대로 붙여 넣으세요.
   // 이 값들은 공개돼도 괜찮아요. 데이터 보호는 firestore.rules가 맡아요.
   firebase: {
-    apiKey: 'AIzaSyD2lwhA9swTBUoSoTDYephLli-u0U5W6mY',
-    authDomain: 'snoop-97d45.firebaseapp.com',
-    projectId: 'snoop-97d45',
-    storageBucket: 'snoop-97d45.firebasestorage.app',
-    messagingSenderId: '344878971352',
-    appId: '1:344878971352:web:1d37ac23c10a53523d1aad'
+    apiKey: 'AIzaSyC37_0eeVA0PyiXE_mr37XI0dsvX-DAkfk',
+    authDomain: 'snoopnoreply-38223.firebaseapp.com',
+    projectId: 'snoopnoreply-38223',
+    storageBucket: 'snoopnoreply-38223.firebasestorage.app',
+    messagingSenderId: '776823080552',
+    appId: '1:776823080552:web:7f06b4ea1fd7060cd05ddd'
   },
   // firebase: {
   //   apiKey: 'AIza...',
@@ -42,7 +42,7 @@ window.PHONE_CONFIG = {
   // ── 예시 폰 ───────────────────────────────────────────
   // '+ 예시로 시작'과 처음 방문했을 때 보이는 예시를, 이 아이디로 배포된 폰에서 가져와요.
   // 그 폰을 고쳐서 다시 배포하면 예시도 바로 바뀌어요. 비워 두면('') 기본 예시(example-data.js)를 써요.
-  examplePlay: 'mv6p4aeuyjyekp1e1qvs',
+  examplePlay: '',
   // 예시에서 빼고 싶은 인물 이름(저장된 이름 그대로). 채팅방·단톡 멤버와 그 사람의 말·친구·연락처·통화·시스템 인물에서 모두 빠져요.
   exampleRemove: ['이수진 대리'],
   // 빠진 인물을 언급하던 문장을 자연스럽게 바꿔 쓰는 목록 ['원래 문장', '바꿀 문장']. 여기에 없는 언급은 '누군가'로 바뀌어요.

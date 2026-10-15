@@ -1,13 +1,4 @@
-# 임시 시험용: Content-Security-Policy 줄을 뺐어요. 로그인 확인이 끝나면 원래 _headers로 되돌려야 해요.
-/*
-  Strict-Transport-Security: max-age=63072000; includeSubDomains; preload
-  X-Frame-Options: DENY
-  X-Content-Type-Options: nosniff
-  Referrer-Policy: strict-origin-when-cross-origin
-  Permissions-Policy: accelerometer=(), bluetooth=(), camera=(), display-capture=(), encrypted-media=(), geolocation=(), gyroscope=(), hid=(), idle-detection=(), magnetometer=(), microphone=(), midi=(), payment=(), picture-in-picture=(), publickey-credentials-get=(), screen-wake-lock=(), serial=(), usb=(), xr-spatial-tracking=()
-  Cross-Origin-Opener-Policy: same-origin-allow-popups
-  X-Permitted-Cross-Domain-Policies: none
-
+# 임시 시험용(2): 보안 헤더를 모두 뺐어요. 로그인 확인이 끝나면 원래 _headers로 되돌려야 해요.
 /index.html
   Cache-Control: no-cache
 /
